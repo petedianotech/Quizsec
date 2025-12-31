@@ -11,10 +11,18 @@ interface TimerBarProps {
 
 export function TimerBar({ duration, onTimeUp, isPaused }: TimerBarProps) {
   const [progress, setProgress] = useState(100);
+  const [timeUp, setTimeUp] = useState(false);
 
   useEffect(() => {
     setProgress(100);
+    setTimeUp(false);
   }, [duration]);
+
+  useEffect(() => {
+    if (timeUp) {
+      onTimeUp();
+    }
+  }, [timeUp, onTimeUp]);
 
   useEffect(() => {
     if (isPaused) return;
@@ -24,7 +32,7 @@ export function TimerBar({ duration, onTimeUp, isPaused }: TimerBarProps) {
         const newProgress = prev - (100 / (duration * 10)); // update every 100ms
         if (newProgress <= 0) {
           clearInterval(interval);
-          onTimeUp();
+          setTimeUp(true);
           return 0;
         }
         return newProgress;
@@ -32,7 +40,7 @@ export function TimerBar({ duration, onTimeUp, isPaused }: TimerBarProps) {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [duration, onTimeUp, isPaused]);
+  }, [duration, isPaused]);
 
   return <Progress value={progress} className="h-2 w-full" />;
 }
