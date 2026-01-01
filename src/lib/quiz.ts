@@ -1,5 +1,5 @@
 import type { Quiz, Question } from '@/types/quiz';
-import { collection, getDocs, limit, query, where, orderBy, startAt, documentId } from 'firebase/firestore';
+import { collection, getDocs, limit, query, where, orderBy, startAt, documentId, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/client-side-exports';
 
 // This function now fetches a random selection of 10 questions from the Firestore question bank.
