@@ -13,6 +13,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useSettingsStore } from '@/store/settings-store';
+import Script from 'next/script';
 
 export function QuizClient() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -186,6 +187,9 @@ export function QuizClient() {
 
   return (
     <div className="flex flex-col w-full h-full">
+      <Script id="propeller-ads-banner">
+        {`(function(s){s.dataset.zone='10402635',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
+      </Script>
       <div className="flex-grow flex items-center justify-center">
         <QuestionCard
             key={currentQuestionIndex}

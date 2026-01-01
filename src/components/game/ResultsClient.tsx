@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useSearchParams } from 'next/navigation';
@@ -6,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Award, Copy, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast"
+import Script from 'next/script';
 
 const getPerformanceLabel = (score: number, total: number): {label: string, description: string} => {
     const percentage = (score / total) * 100;
@@ -35,6 +37,9 @@ export function ResultsClient() {
 
     return (
        <div className="flex flex-col w-full h-full">
+            <Script id="propeller-ads-banner">
+                {`(function(s){s.dataset.zone='10402635',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
+            </Script>
             <div className="flex-grow flex items-center justify-center">
                 <Card className="w-full max-w-md text-center shadow-lg animate-in fade-in zoom-in-95">
                     <CardHeader>
