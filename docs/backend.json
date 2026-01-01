@@ -1,0 +1,214 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the MindSprint Daily game.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "createdAt"
+      ]
+    },
+    "Quiz": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quiz",
+      "type": "object",
+      "description": "Represents a quiz in the MindSprint Daily game.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the quiz (YYYY-MM-DD format)."
+        },
+        "questions": {
+          "type": "array",
+          "description": "An array of question objects for the quiz.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "questions"
+      ]
+    },
+    "Question": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Question",
+      "type": "object",
+      "description": "Represents a question within a quiz.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the question."
+        },
+        "quizId": {
+          "type": "string",
+          "description": "Reference to Quiz. (Relationship: Quiz 1:N Question)"
+        },
+        "questionText": {
+          "type": "string",
+          "description": "The text of the question."
+        },
+        "options": {
+          "type": "array",
+          "description": "An array of possible answer options.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "correctIndex": {
+          "type": "number",
+          "description": "The index of the correct answer option in the options array."
+        },
+        "difficultyLevel": {
+          "type": "number",
+          "description": "The difficulty level of the question (1-10)."
+        }
+      },
+      "required": [
+        "id",
+        "quizId",
+        "questionText",
+        "options",
+        "correctIndex",
+        "difficultyLevel"
+      ]
+    },
+    "UserQuizSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserQuizSession",
+      "type": "object",
+      "description": "Represents a user's session playing a specific quiz.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user quiz session."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N UserQuizSession)"
+        },
+        "quizId": {
+          "type": "string",
+          "description": "Reference to Quiz. (Relationship: Quiz 1:N UserQuizSession)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the user started the quiz session.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the user finished the quiz session.",
+          "format": "date-time"
+        },
+        "score": {
+          "type": "number",
+          "description": "The user's score for the quiz session."
+        },
+        "questionResponses": {
+          "type": "array",
+          "description": "An array of user responses to each question in the quiz.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "quizId",
+        "startTime",
+        "endTime",
+        "score"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/quizzes/{quizId}",
+        "definition": {
+          "entityName": "Quiz",
+          "schema": {
+            "$ref": "#/backend/entities/Quiz"
+          },
+          "description": "Stores daily quizzes. The `quizId` is in `YYYY-MM-DD` format.",
+          "params": [
+            {
+              "name": "quizId",
+              "description": "Unique identifier for the quiz (YYYY-MM-DD format)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/userQuizSessions/{sessionId}",
+        "definition": {
+          "entityName": "UserQuizSession",
+          "schema": {
+            "$ref": "#/backend/entities/UserQuizSession"
+          },
+          "description": "Stores user's quiz sessions. Path-based ownership ensures only the user can access their quiz sessions.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "sessionId",
+              "description": "Unique identifier for the user quiz session."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the MindSprint Daily game, emphasizing security, scalability, and ease of debugging. The structure prioritizes authorization independence using denormalization, simplifies security rules via structural segregation, and ensures data clarity through explicit state modeling and predictable schemas. Path-based ownership is used where applicable to enhance security.\n\n*   `/quizzes/{quizId}`: This collection stores the daily quizzes. The `quizId` is in `YYYY-MM-DD` format. This structure allows for easy retrieval of daily quizzes.\n*   `/users/{userId}/userQuizSessions/{sessionId}`: This subcollection stores the user's quiz sessions. This path-based ownership ensures that only the user can access their quiz sessions. The structure includes the `userId` in the path, making it easy to enforce security rules based on user identity.\n\n**Authorization Independence (CRITICAL):**\n\n*   The design leverages path-based ownership (`/users/{userId}/userQuizSessions/{sessionId}`) to ensure that authorization can be determined directly from the document path without needing to `get()` parent documents. This supports atomic operations and simplifies security rules.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations. Since the `userQuizSessions` are stored in a subcollection of `users`, listing quiz sessions is inherently limited to a specific user. The rule `allow list: if request.auth.uid == userId;` will ensure that a user can only list their own quiz sessions."
+  }
+}

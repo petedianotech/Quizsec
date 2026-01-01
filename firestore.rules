@@ -1,0 +1,147 @@
+/**
+ * This ruleset enforces a security model for the MindSprint Daily game.
+ *
+ * Core Philosophy:
+ * The security model is user-centric. All user-generated data, such as quiz
+ * sessions and user profiles, is strictly owned by the user who created it.
+ * Public game content, like daily quizzes, is readable by anyone but is not
+ * client-writable, ensuring its integrity.
+ *
+ * Data Structure:
+ * The data is organized into two main top-level collections:
+ * 1. /quizzes/{quizId}: A public, read-only collection containing the game's quizzes.
+ * 2. /users/{userId}: A collection where each document represents a user's profile.
+ *
+ * All private, user-specific data is nested within a user's document. For example,
+ * a user's game history is stored at /users/{userId}/userQuizSessions/{sessionId}. This
+ * structure makes ownership-based security rules simple and efficient.
+ *
+ * Key Security Decisions:
+ * - User Isolation: Users are strictly prohibited from viewing or listing other users'
+ *   profiles or private data. The /users collection is not listable.
+ * - Path-Based Ownership: User-specific data is stored in subcollections under
+ *   /users/{userId}, allowing authorization to be determined directly from the document
+ *   path. This avoids costly lookups and simplifies rules.
+ * - Content Integrity: The /quizzes collection is read-only for all clients. Quizzes
+ *   must be managed by a trusted server environment using the Admin SDK.
+ * - Self-Service Profile: A user can create their own user profile document upon
+ *   signing up, but cannot create profiles for others.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------------------------------------------
+    // Helper Functions
+    // --------------------------------------------------------------------
+
+    /**
+     * Returns true if the user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Returns true if the requesting user's UID matches the provided userId.
+     * This is the primary function for checking document ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Returns true if the document exists AND the user is the owner.
+     * Used for safe update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Validates that the 'userId' field in a new UserQuizSession document
+     * matches the userId from the path, ensuring relational integrity.
+     */
+    function hasValidUserId(userId) {
+      return request.resource.data.userId == userId;
+    }
+
+    /**
+     * Ensures the 'userId' field in a UserQuizSession cannot be changed after creation.
+     */
+    function hasImmutableUserId() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+    
+    /**
+     * Validates that the 'id' field in a new User document
+     * matches the userId from the path, ensuring relational integrity.
+     */
+    function hasValidUserProfileId(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * Ensures the 'id' field in a User profile cannot be changed after creation.
+     */
+    function hasImmutableUserProfileId() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    // --------------------------------------------------------------------
+    // Collection: quizzes
+    // --------------------------------------------------------------------
+
+    /**
+     * @description Public, read-only collection for daily quizzes.
+     * @path /quizzes/{quizId}
+     * @allow (get) Any user, signed in or not, can read a specific quiz.
+     * @deny (create) A client attempts to create a new quiz document.
+     * @principle Secures game content by making it read-only for clients. All quiz data must be managed via a trusted backend.
+     */
+    match /quizzes/{quizId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // --------------------------------------------------------------------
+    // Collection: users
+    // --------------------------------------------------------------------
+
+    /**
+     * @description Stores private user profiles.
+     * @path /users/{userId}
+     * @allow (create) A new user (uid: 'user_abc') creates their own profile at /users/user_abc.
+     * @deny (get) A signed-in user ('user_123') tries to read the profile of another user ('user_456').
+     * @deny (list) Any client attempts to list all documents in the /users collection.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && hasValidUserProfileId(userId);
+      allow update: if isExistingOwner(userId) && hasImmutableUserProfileId();
+      allow delete: if isExistingOwner(userId);
+
+      // ------------------------------------------------------------------
+      // Subcollection: userQuizSessions
+      // ------------------------------------------------------------------
+
+      /**
+       * @description Stores a user's individual quiz session results.
+       * @path /users/{userId}/userQuizSessions/{sessionId}
+       * @allow (create) A signed-in user (uid: 'user_abc') creates a new quiz session for themselves.
+       * @deny (update) A signed-in user (uid: 'user_123') tries to update a session belonging to 'user_456'.
+       * @principle Enforces strict path-based ownership for all personal user data.
+       */
+      match /userQuizSessions/{sessionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && hasValidUserId(userId);
+        allow update: if isExistingOwner(userId) && hasImmutableUserId();
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+  }
+}
