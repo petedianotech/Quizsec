@@ -41,6 +41,12 @@ export default function RootLayout({
         <Script id="propeller-ads-banner">
             {`(function(s){s.dataset.zone='10402635',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>
+        <Script
+          src="https://quge5.com/88/tag.min.js"
+          data-zone="197925"
+          async
+          data-cfasync="false"
+        ></Script>
       </body>
     </html>
   );
