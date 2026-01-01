@@ -35,11 +35,13 @@ export function QuestionCard({
   
   const { timerEnabled, timerDuration } = useSettingsStore();
 
-  const getButtonVariant = (index: number): 'outline' | 'success' | 'destructive' | 'default' | 'secondary' | 'ghost' | 'link' | null | undefined => {
+  const getButtonVariant = (index: number): 'outline' | 'success' | 'destructive' | 'secondary' => {
     if (!isAnswered) {
+      // If an answer has been selected but not yet confirmed as correct/incorrect
       return index === selectedAnswerIndex ? 'secondary' : 'outline';
     }
 
+    // After the answer has been confirmed
     const isCorrect = index === question.correctIndex;
     const isSelected = index === selectedAnswerIndex;
 
@@ -53,16 +55,12 @@ export function QuestionCard({
     if (!isAnswered) return '';
 
     const isCorrect = index === question.correctIndex;
-    const isSelected = index === selectedAnswerIndex;
     
-    // If an answer was selected (incorrectly)
-    if(selectedAnswerIndex !== null) {
-      if(!isCorrect && !isSelected) {
-        return 'opacity-50';
-      }
-    } else { // if time ran out (no selection)
+    // If an incorrect answer was selected, or if time ran out,
+    // fade out the non-correct options.
+    if(selectedAnswerIndex !== question.correctIndex) {
       if(!isCorrect) {
-         return 'opacity-50';
+        return 'opacity-50';
       }
     }
     
