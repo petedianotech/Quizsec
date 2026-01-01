@@ -19,6 +19,9 @@ const fontHeadline = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'Quizsec',
   description: 'How sharp is your mind today?',
+  other: {
+    'monetag': 'cbfb4eb2eac41b19706971a7d7ff78d5'
+  }
 };
 
 export default function RootLayout({
