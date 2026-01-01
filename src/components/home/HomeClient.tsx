@@ -1,9 +1,8 @@
 "use client";
 
-import { useDailyLock } from '@/hooks/use-daily-lock';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Loader2, CheckCircle, BrainCircuit, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Loader2, BrainCircuit, ArrowRight, ShieldCheck } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -20,34 +19,6 @@ import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useEffect } from 'react';
 
 function WelcomeCard() {
-  const { isCompletedToday, score } = useDailyLock();
-
-  if (isCompletedToday) {
-    return (
-      <Card className="w-full max-w-md text-center shadow-lg animate-in fade-in zoom-in-95">
-        <CardHeader>
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
-            <CheckCircle className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-bold">Quiz Completed!</CardTitle>
-          <CardDescription>
-            You scored {score}/10 today. Great job!
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-lg">Come back tomorrow for a new set of challenges or try our new campaign mode!</p>
-        </CardContent>
-        <CardFooter className="flex-col gap-2">
-            <Button asChild className="w-full" size="lg">
-              <Link href="/campaign">
-                Play Campaign <ShieldCheck className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
-
   return (
     <Card className="w-full max-w-md text-center shadow-lg animate-in fade-in zoom-in-95">
       <CardHeader>

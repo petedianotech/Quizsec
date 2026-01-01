@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDailyQuiz } from '@/lib/quiz';
 import type { Quiz, Question } from '@/types/quiz';
-import { useDailyLock } from '@/hooks/use-daily-lock';
 import { QuestionCard } from './QuestionCard';
 import { Loader2 } from 'lucide-react';
 import { logQuizStart, logQuestionAnswer, logQuizComplete } from '@/lib/analytics';
@@ -18,7 +17,6 @@ export function QuizClient() {
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
-  const { markAsCompleted } = useDailyLock();
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -52,10 +50,10 @@ export function QuizClient() {
     } else {
       // End of quiz
       logQuizComplete(score, quiz.questions.length);
-      markAsCompleted(score);
+      // In a real app with user accounts, we would save the score here.
       router.push(`/results?score=${score}&total=${quiz.questions.length}`);
     }
-  }, [currentQuestionIndex, quiz, router, score, markAsCompleted]);
+  }, [currentQuestionIndex, quiz, router, score]);
 
   const handleAnswer = useCallback((answerIndex: number) => {
     if (isAnswered || !currentQuestion) return;
