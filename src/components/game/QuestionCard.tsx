@@ -34,7 +34,7 @@ export function QuestionCard({
   
   const { timerEnabled, timerDuration } = useSettingsStore();
 
-  const getButtonVariant = (index: number): VariantProps<typeof buttonVariants>['variant'] => {
+  const getButtonVariant = (index: number): 'outline' | 'success' | 'destructive' | 'default' | 'secondary' | 'ghost' | 'link' | null | undefined => {
     const isSelected = index === selectedAnswerIndex;
 
     if (!isAnswered) {
@@ -108,7 +108,6 @@ export function QuestionCard({
             <Button
               key={index}
               onClick={() => onAnswer(index)}
-              disabled={isAnswered}
               className={cn(
                 "h-auto min-h-[4rem] whitespace-normal justify-start p-4 text-left text-base leading-snug transition-all duration-300 border-2",
                 getButtonClass(index)
