@@ -4,13 +4,14 @@ import { useCollection } from '@/firebase';
 import { useMemoFirebase } from '@/firebase/provider';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { firestore } from '@/firebase/client-side-exports';
-import type { Season, Level, UserLevelProgress } from '@/types/quiz';
+import type { Season, Level, UserLevelProgress, UserProfile } from '@/types/quiz';
 import { Loader2, Lock, Star, Zap } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { doc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 // Function to generate a color theme based on season number
 const getSeasonTheme = (seasonNumber: number) => {
@@ -30,18 +31,24 @@ const getSeasonTheme = (seasonNumber: number) => {
 };
 
 
-function LevelItem({ level, seasonNumber, userProgress }: { level: Level; seasonNumber: number; userProgress: UserLevelProgress | undefined }) {
-    const isUnlocked = userProgress?.unlocked ?? level.levelNumber === 1; // First level is always unlocked
+function LevelItem({ level, seasonNumber, userProgress, isUnlocked, onPlay }: { level: Level; seasonNumber: number; userProgress: UserLevelProgress | undefined, isUnlocked: boolean, onPlay: (levelId: string, seasonId: string) => void }) {
     const isCompleted = userProgress?.completed ?? false;
     const score = userProgress?.score ?? 0;
 
+    const handleClick = () => {
+        if (isUnlocked && !isCompleted) {
+            onPlay(level.id, `season-${seasonNumber}`);
+        }
+    }
+
     return (
         <div
+            onClick={handleClick}
             className={cn(
                 "flex items-center justify-between rounded-lg border p-4 transition-all",
-                !isUnlocked && "bg-muted/50 text-muted-foreground",
+                !isUnlocked && "bg-muted/50 text-muted-foreground cursor-not-allowed",
                 isUnlocked && !isCompleted && "bg-accent/10 hover:bg-accent/20 cursor-pointer",
-                isCompleted && "bg-green-600/10 border-green-600/30 text-primary"
+                isCompleted && "bg-green-600/10 border-green-600/30 text-primary cursor-default"
             )}
             style={isUnlocked ? getSeasonTheme(seasonNumber) : {}}
         >
@@ -68,14 +75,20 @@ function LevelItem({ level, seasonNumber, userProgress }: { level: Level; season
 
 function SeasonAccordionItem({ season }: { season: Season }) {
     const { user } = useUser();
+    const router = useRouter();
+
     const { data: levels, isLoading: levelsLoading } = useCollection<Level>(
         useMemoFirebase(() =>
             query(collection(firestore, 'seasons', season.id, 'levels'), orderBy('levelNumber')),
         [season.id])
     );
-    const { data: userProfile, isLoading: userLoading } = useDoc(
+    const { data: userProfile, isLoading: userLoading } = useDoc<UserProfile>(
         useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user])
     );
+
+    const onPlayLevel = (levelId: string, seasonId: string) => {
+        router.push(`/quiz?levelId=${levelId}&seasonId=${seasonId}`);
+    }
 
     if (levelsLoading || userLoading) {
         return (
@@ -84,6 +97,17 @@ function SeasonAccordionItem({ season }: { season: Season }) {
             </div>
         )
     }
+
+    const getLevelIsUnlocked = (levelNumber: number) => {
+        if (levelNumber === 1) return true; // Level 1 is always unlocked
+
+        const previousLevelNumber = levelNumber - 1;
+        const previousLevelProgressKey = `season-${season.seasonNumber}-level-${previousLevelNumber}`;
+        const previousLevelProgress = userProfile?.campaignProgress?.[previousLevelProgressKey];
+
+        return previousLevelProgress?.completed ?? false;
+    }
+
 
     return (
         <AccordionItem value={season.id} className="border-b-0">
@@ -107,8 +131,18 @@ function SeasonAccordionItem({ season }: { season: Season }) {
             >
                 <div className="space-y-3">
                     {levels?.map(level => {
-                         const progress = userProfile?.campaignProgress?.[`season-${season.seasonNumber}-level-${level.levelNumber}`];
-                         return <LevelItem key={level.id} level={level} seasonNumber={season.seasonNumber} userProgress={progress} />
+                         const progressKey = `season-${season.seasonNumber}-level-${level.levelNumber}`;
+                         const progress = userProfile?.campaignProgress?.[progressKey];
+                         const isUnlocked = getLevelIsUnlocked(level.levelNumber);
+
+                         return <LevelItem 
+                                    key={level.id} 
+                                    level={level} 
+                                    seasonNumber={season.seasonNumber} 
+                                    userProgress={progress} 
+                                    isUnlocked={isUnlocked}
+                                    onPlay={onPlayLevel}
+                                />
                     })}
                 </div>
             </AccordionContent>

@@ -21,15 +21,13 @@ export interface Level {
     seasonId: string;
     title: string;
     description: string;
-    questions: Question[];
 }
 
 export interface Season {
-    id: string;
+    id:string;
     seasonNumber: number;
     title: string;
     description: string;
-    levels: Level[];
 }
 
 export interface UserLevelProgress {
@@ -38,4 +36,14 @@ export interface UserLevelProgress {
     score: number;
     completed: boolean;
     unlocked: boolean;
+}
+
+export interface UserProfile {
+    id: string;
+    username: string;
+    email: string;
+    createdAt: string;
+    campaignProgress?: {
+        [key: string]: UserLevelProgress;
+    };
 }

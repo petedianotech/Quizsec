@@ -2,11 +2,12 @@
 
 import type { Question } from '@/types/quiz';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TimerBar } from './TimerBar';
-import { Check, X } from 'lucide-react';
+import { Check, X, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 interface QuestionCardProps {
   question: Question;
@@ -16,6 +17,7 @@ interface QuestionCardProps {
   onTimeUp: () => void;
   isAnswered: boolean;
   selectedAnswerIndex: number | null;
+  isCampaignMode?: boolean;
 }
 
 export function QuestionCard({
@@ -26,6 +28,7 @@ export function QuestionCard({
   onTimeUp,
   isAnswered,
   selectedAnswerIndex,
+  isCampaignMode = false
 }: QuestionCardProps) {
   const getButtonVariant = (index: number) => {
     if (!isAnswered) return 'outline';
@@ -78,6 +81,16 @@ export function QuestionCard({
           ))}
         </div>
       </CardContent>
+      {isCampaignMode && (
+          <CardFooter>
+            <Button variant="ghost" asChild>
+                <Link href="/campaign">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Campaign
+                </Link>
+            </Button>
+          </CardFooter>
+      )}
     </Card>
   );
 }

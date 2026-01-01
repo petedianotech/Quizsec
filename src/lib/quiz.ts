@@ -1,7 +1,8 @@
 import type { Quiz, Question } from '@/types/quiz';
-import { collection, getDocs, limit, query, orderBy, documentId, doc } from 'firebase/firestore';
+import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import { firestore } from '@/firebase/client-side-exports';
 import { dailyQuizData } from './quiz-data'; // Import local fallback data
+import { doc } from 'firebase/firestore';
 
 // This function now fetches a random selection of 10 questions from the Firestore question bank.
 export async function getDailyQuiz(): Promise<Quiz> {
@@ -14,13 +15,13 @@ export async function getDailyQuiz(): Promise<Quiz> {
     const randomId = doc(collection(firestore, 'tmp')).id;
   
     // 2. Query for documents "starting at" our random ID and get 10.
-    const q = query(questionsCol, orderBy(documentId()), limit(10));
+    const q = query(questionsCol, where('seasonId', '==', null), limit(10));
     
     let querySnapshot = await getDocs(q);
   
     // 3. If the query returns no documents (e.g., collection is empty), use fallback data.
     if (querySnapshot.empty) {
-      console.log("No questions found in Firestore, using local fallback data.");
+      console.log("No daily questions found in Firestore, using local fallback data.");
       const today = new Date();
       const todayDateString = today.toISOString().split('T')[0];
       return {
@@ -58,4 +59,32 @@ export async function getDailyQuiz(): Promise<Quiz> {
         date: todayDateString,
     };
   }
+}
+
+// Function to fetch questions for a specific campaign level
+export async function getCampaignQuiz(seasonId: string, levelId: string): Promise<Quiz> {
+  const questionsCol = collection(firestore, 'questions');
+  const q = query(
+    questionsCol, 
+    where('seasonId', '==', seasonId), 
+    where('levelId', '==', levelId),
+    limit(10)
+  );
+
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    throw new Error(`No questions found for season ${seasonId}, level ${levelId}`);
+  }
+
+  const questions: Question[] = [];
+  querySnapshot.forEach(doc => {
+    questions.push({ id: doc.id, ...doc.data() } as Question);
+  });
+
+  return {
+    id: `${seasonId}-${levelId}`,
+    date: new Date().toISOString().split('T')[0], // Not really a 'daily' quiz date
+    questions,
+  };
 }
