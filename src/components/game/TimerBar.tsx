@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Progress } from '@/components/ui/progress';
 
 interface TimerBarProps {
@@ -11,28 +11,26 @@ interface TimerBarProps {
 
 export function TimerBar({ duration, onTimeUp, isPaused }: TimerBarProps) {
   const [progress, setProgress] = useState(100);
-  const [timeUp, setTimeUp] = useState(false);
+  const timeUpReported = useRef(false);
 
   useEffect(() => {
-    setProgress(100);
-    setTimeUp(false);
-  }, [duration]);
-
-  useEffect(() => {
-    if (timeUp) {
-      onTimeUp();
+    if (isPaused) {
+      return;
     }
-  }, [timeUp, onTimeUp]);
 
-  useEffect(() => {
-    if (isPaused) return;
+    // Reset timer state when a new question comes in (via key change)
+    setProgress(100);
+    timeUpReported.current = false;
 
     const interval = setInterval(() => {
       setProgress((prev) => {
         const newProgress = prev - (100 / (duration * 10)); // update every 100ms
         if (newProgress <= 0) {
           clearInterval(interval);
-          setTimeUp(true);
+          if (!timeUpReported.current) {
+            onTimeUp();
+            timeUpReported.current = true;
+          }
           return 0;
         }
         return newProgress;
@@ -40,7 +38,7 @@ export function TimerBar({ duration, onTimeUp, isPaused }: TimerBarProps) {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [duration, isPaused]);
+  }, [duration, isPaused, onTimeUp]);
 
   return <Progress value={progress} className="h-2 w-full" />;
 }

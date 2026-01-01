@@ -7,6 +7,9 @@ import type { Quiz, Question } from '@/types/quiz';
 import { QuestionCard } from './QuestionCard';
 import { Loader2 } from 'lucide-react';
 import { logQuizStart, logQuestionAnswer, logQuizComplete } from '@/lib/analytics';
+import { useUser, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export function QuizClient() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -15,6 +18,8 @@ export function QuizClient() {
   const [isAnswered, setIsAnswered] = useState(false);
   const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useUser();
+  const firestore = useFirestore();
 
   const router = useRouter();
 
@@ -24,7 +29,9 @@ export function QuizClient() {
         setIsLoading(true);
         const quizData = await getDailyQuiz();
         setQuiz(quizData);
-        logQuizStart();
+        if (user) {
+            logQuizStart();
+        }
       } catch (error) {
         console.error("Failed to fetch daily quiz:", error);
         // Optionally handle the error in the UI
@@ -33,7 +40,7 @@ export function QuizClient() {
       }
     };
     fetchQuiz();
-  }, []);
+  }, [user]);
 
   const currentQuestion: Question | undefined = useMemo(
     () => quiz?.questions[currentQuestionIndex],
@@ -50,10 +57,20 @@ export function QuizClient() {
     } else {
       // End of quiz
       logQuizComplete(score, quiz.questions.length);
-      // In a real app with user accounts, we would save the score here.
+      if (user) {
+        const sessionRef = doc(firestore, 'users', user.uid, 'userQuizSessions', quiz.id);
+        setDocumentNonBlocking(sessionRef, {
+            id: quiz.id,
+            userId: user.uid,
+            quizId: quiz.id,
+            startTime: new Date().toISOString(),
+            endTime: new Date().toISOString(), // Simplified for now
+            score: score,
+        }, { merge: true });
+      }
       router.push(`/results?score=${score}&total=${quiz.questions.length}`);
     }
-  }, [currentQuestionIndex, quiz, router, score]);
+  }, [currentQuestionIndex, quiz, router, score, user, firestore]);
 
   const handleAnswer = useCallback((answerIndex: number) => {
     if (isAnswered || !currentQuestion) return;
@@ -66,12 +83,14 @@ export function QuizClient() {
       setScore((prev) => prev + 1);
     }
 
-    logQuestionAnswer(currentQuestionIndex, isCorrect);
+    if (user) {
+        logQuestionAnswer(currentQuestionIndex, isCorrect);
+    }
     
     setTimeout(() => {
         handleNextQuestion();
     }, 1500); // Wait 1.5 seconds to show feedback before next question
-  }, [isAnswered, currentQuestion, currentQuestionIndex, handleNextQuestion]);
+  }, [isAnswered, currentQuestion, currentQuestionIndex, handleNextQuestion, user]);
 
   const handleTimeUp = useCallback(() => {
     if (isAnswered) return;
@@ -79,12 +98,14 @@ export function QuizClient() {
     setIsAnswered(true);
     setSelectedAnswerIndex(null); // No answer selected
 
-    logQuestionAnswer(currentQuestionIndex, false);
+    if (user) {
+        logQuestionAnswer(currentQuestionIndex, false);
+    }
 
     setTimeout(() => {
         handleNextQuestion();
     }, 1500);
-  }, [isAnswered, currentQuestionIndex, handleNextQuestion]);
+  }, [isAnswered, currentQuestionIndex, handleNextQuestion, user]);
 
   if (isLoading || !quiz || !currentQuestion) {
     return (

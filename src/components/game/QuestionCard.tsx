@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TimerBar } from './TimerBar';
 import { Check, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface QuestionCardProps {
   question: Question;
@@ -32,6 +33,11 @@ export function QuestionCard({
     if (index === selectedAnswerIndex) return 'destructive';
     return 'outline';
   };
+  const [key, setKey] = useState(0);
+
+  useEffect(() => {
+    setKey(prev => prev + 1);
+  }, [question]);
 
   return (
     <Card className="w-full max-w-2xl animate-in fade-in zoom-in-95">
@@ -41,7 +47,7 @@ export function QuestionCard({
             Question {questionNumber} / {totalQuestions}
           </p>
           <div className="w-1/3">
-             <TimerBar duration={15} onTimeUp={onTimeUp} isPaused={isAnswered} />
+             <TimerBar key={key} duration={15} onTimeUp={onTimeUp} isPaused={isAnswered} />
           </div>
         </div>
         <CardTitle className="text-xl md:text-2xl text-center leading-relaxed">
