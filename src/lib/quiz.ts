@@ -1,10 +1,26 @@
-import { dailyQuizData } from './quiz-data';
-import type { Quiz } from '@/types/quiz';
+import type { Quiz, Question } from '@/types/quiz';
+import { collection, getDocs, limit, query, where } from 'firebase/firestore';
+import { firestore } from '@/firebase/client-side-exports';
 
-// In a real app, this would fetch from Firestore based on the current date.
-// For this MVP, we return a static, pre-generated quiz.
-export function getDailyQuiz(): Quiz {
-  // To ensure the quiz date is always "today", we dynamically update the date.
+// This function now fetches a random selection of 10 questions from the Firestore question bank.
+export async function getDailyQuiz(): Promise<Quiz> {
+  const questionsCol = collection(firestore, 'questions');
+  // In a real-world scenario with a large dataset, you'd want a more sophisticated
+  // way to select random documents. Firestore doesn't have a native "random" function.
+  // A common strategy is to generate a random ID and query for documents greater than that ID,
+  // but for this MVP, we'll fetch a limited number and shuffle them.
+  const q = query(questionsCol, limit(50)); // Fetch 50 questions to get a random-enough sample
+  const querySnapshot = await getDocs(q);
+
+  const allQuestions: Question[] = [];
+  querySnapshot.forEach((doc) => {
+    allQuestions.push(doc.data() as Question);
+  });
+
+  // Shuffle the array and pick the first 10
+  const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+  const selectedQuestions = shuffled.slice(0, 10);
+
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -12,8 +28,8 @@ export function getDailyQuiz(): Quiz {
   const todayDateString = `${year}-${month}-${day}`;
 
   return {
-    ...dailyQuizData,
     id: `quiz-${todayDateString}`,
     date: todayDateString,
+    questions: selectedQuestions,
   };
 }

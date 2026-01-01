@@ -15,14 +15,26 @@ export function QuizClient() {
   const [score, setScore] = useState(0);
   const [isAnswered, setIsAnswered] = useState(false);
   const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
   const { markAsCompleted } = useDailyLock();
 
   useEffect(() => {
-    const quizData = getDailyQuiz();
-    setQuiz(quizData);
-    logQuizStart();
+    const fetchQuiz = async () => {
+      try {
+        setIsLoading(true);
+        const quizData = await getDailyQuiz();
+        setQuiz(quizData);
+        logQuizStart();
+      } catch (error) {
+        console.error("Failed to fetch daily quiz:", error);
+        // Optionally handle the error in the UI
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchQuiz();
   }, []);
 
   const currentQuestion: Question | undefined = useMemo(
@@ -76,7 +88,7 @@ export function QuizClient() {
     }, 1500);
   }, [isAnswered, currentQuestionIndex, handleNextQuestion]);
 
-  if (!quiz || !currentQuestion) {
+  if (isLoading || !quiz || !currentQuestion) {
     return (
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

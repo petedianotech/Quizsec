@@ -65,10 +65,6 @@
           "type": "string",
           "description": "Unique identifier for the question."
         },
-        "quizId": {
-          "type": "string",
-          "description": "Reference to Quiz. (Relationship: Quiz 1:N Question)"
-        },
         "questionText": {
           "type": "string",
           "description": "The text of the question."
@@ -91,7 +87,6 @@
       },
       "required": [
         "id",
-        "quizId",
         "questionText",
         "options",
         "correctIndex",
@@ -157,17 +152,17 @@
   "firestore": {
     "structure": [
       {
-        "path": "/quizzes/{quizId}",
+        "path": "/questions/{questionId}",
         "definition": {
-          "entityName": "Quiz",
+          "entityName": "Question",
           "schema": {
-            "$ref": "#/backend/entities/Quiz"
+            "$ref": "#/backend/entities/Question"
           },
-          "description": "Stores daily quizzes. The `quizId` is in `YYYY-MM-DD` format.",
+          "description": "Stores individual quiz questions.",
           "params": [
             {
-              "name": "quizId",
-              "description": "Unique identifier for the quiz (YYYY-MM-DD format)."
+              "name": "questionId",
+              "description": "Unique identifier for the question."
             }
           ]
         }
@@ -209,6 +204,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the MindSprint Daily game, emphasizing security, scalability, and ease of debugging. The structure prioritizes authorization independence using denormalization, simplifies security rules via structural segregation, and ensures data clarity through explicit state modeling and predictable schemas. Path-based ownership is used where applicable to enhance security.\n\n*   `/quizzes/{quizId}`: This collection stores the daily quizzes. The `quizId` is in `YYYY-MM-DD` format. This structure allows for easy retrieval of daily quizzes.\n*   `/users/{userId}/userQuizSessions/{sessionId}`: This subcollection stores the user's quiz sessions. This path-based ownership ensures that only the user can access their quiz sessions. The structure includes the `userId` in the path, making it easy to enforce security rules based on user identity.\n\n**Authorization Independence (CRITICAL):**\n\n*   The design leverages path-based ownership (`/users/{userId}/userQuizSessions/{sessionId}`) to ensure that authorization can be determined directly from the document path without needing to `get()` parent documents. This supports atomic operations and simplifies security rules.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations. Since the `userQuizSessions` are stored in a subcollection of `users`, listing quiz sessions is inherently limited to a specific user. The rule `allow list: if request.auth.uid == userId;` will ensure that a user can only list their own quiz sessions."
+    "reasoning": "The Firestore structure is designed to support the MindSprint Daily game, emphasizing security, scalability, and ease of debugging. The structure prioritizes authorization independence using denormalization, simplifies security rules via structural segregation, and ensures data clarity through explicit state modeling and predictable schemas. Path-based ownership is used where applicable to enhance security.\n\n*   `/questions/{questionId}`: This collection stores the bank of all quiz questions. This allows for efficient querying and management of the question pool.\n*   `/users/{userId}`: This collection stores user profiles.\n*   `/users/{userId}/userQuizSessions/{sessionId}`: This subcollection stores the user's quiz sessions. This path-based ownership ensures that only the user can access their quiz sessions. The structure includes the `userId` in the path, making it easy to enforce security rules based on user identity.\n\n**Authorization Independence (CRITICAL):**\n\n*   The design leverages path-based ownership (`/users/{userId}/userQuizSessions/{sessionId}`) to ensure that authorization can be determined directly from the document path without needing to `get()` parent documents. This supports atomic operations and simplifies security rules.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations. Since the `userQuizSessions` are stored in a subcollection of `users`, listing quiz sessions is inherently limited to a specific user. The rule `allow list: if request.auth.uid == userId;` will ensure that a user can only list their own quiz sessions."
   }
 }

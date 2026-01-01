@@ -4,12 +4,12 @@
  * Core Philosophy:
  * The security model is user-centric. All user-generated data, such as quiz
  * sessions and user profiles, is strictly owned by the user who created it.
- * Public game content, like daily quizzes, is readable by anyone but is not
+ * Public game content, like quiz questions, is readable by any signed-in user but is not
  * client-writable, ensuring its integrity.
  *
  * Data Structure:
- * The data is organized into two main top-level collections:
- * 1. /quizzes/{quizId}: A public, read-only collection containing the game's quizzes.
+ * The data is organized into three main top-level collections:
+ * 1. /questions/{questionId}: A public, read-only collection containing the game's questions.
  * 2. /users/{userId}: A collection where each document represents a user's profile.
  *
  * All private, user-specific data is nested within a user's document. For example,
@@ -22,8 +22,8 @@
  * - Path-Based Ownership: User-specific data is stored in subcollections under
  *   /users/{userId}, allowing authorization to be determined directly from the document
  *   path. This avoids costly lookups and simplifies rules.
- * - Content Integrity: The /quizzes collection is read-only for all clients. Quizzes
- *   must be managed by a trusted server environment using the Admin SDK.
+ * - Content Integrity: The /questions collection is read-only for all clients. Questions
+ *   must be managed by a trusted server environment using the Admin SDK (or a Genkit flow).
  * - Self-Service Profile: A user can create their own user profile document upon
  *   signing up, but cannot create profiles for others.
  */
@@ -89,21 +89,19 @@ service cloud.firestore {
     }
 
     // --------------------------------------------------------------------
-    // Collection: quizzes
+    // Collection: questions
     // --------------------------------------------------------------------
 
     /**
-     * @description Public, read-only collection for daily quizzes.
-     * @path /quizzes/{quizId}
-     * @allow (get) Any user, signed in or not, can read a specific quiz.
-     * @deny (create) A client attempts to create a new quiz document.
-     * @principle Secures game content by making it read-only for clients. All quiz data must be managed via a trusted backend.
+     * @description Public, read-only collection for the question bank.
+     * @path /questions/{questionId}
+     * @allow (get, list) Any signed-in user can read questions.
+     * @deny (create, update, delete) Clients cannot modify the question bank.
+     * @principle Secures game content by making it read-only for clients. All question data must be managed via a trusted backend (like a Genkit flow).
      */
-    match /quizzes/{quizId} {
-      allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    match /questions/{questionId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     // --------------------------------------------------------------------

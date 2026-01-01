@@ -1,4 +1,5 @@
 export interface Question {
+  id?: string; // Firestore document ID
   questionText: string;
   options: string[];
   correctIndex: number;
