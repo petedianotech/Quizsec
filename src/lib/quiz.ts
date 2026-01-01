@@ -1,25 +1,19 @@
 import type { Quiz, Question } from '@/types/quiz';
-import { collection, getDocs, limit, query, where } from 'firebase/firestore';
+import { collection, getDocs, limit, query, where, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/client-side-exports';
 import { dailyQuizData } from './quiz-data'; // Import local fallback data
-import { doc } from 'firebase/firestore';
 
 // This function now fetches a random selection of 10 questions from the Firestore question bank.
 export async function getDailyQuiz(): Promise<Quiz> {
   try {
     const questionsCol = collection(firestore, 'questions');
-
-    // A more efficient way to get random documents in Firestore.
-    // 1. Generate a random ID in the valid character set for Firestore document IDs.
-    // This creates a new reference in a temporary "imaginary" collection to get a valid random ID.
-    const randomId = doc(collection(firestore, 'tmp')).id;
-  
-    // 2. Query for documents "starting at" our random ID and get 10.
+    
+    // For simplicity, we'll query for questions not part of a campaign
     const q = query(questionsCol, where('seasonId', '==', null), limit(10));
     
     let querySnapshot = await getDocs(q);
   
-    // 3. If the query returns no documents (e.g., collection is empty), use fallback data.
+    // If the query returns no documents, use fallback data.
     if (querySnapshot.empty) {
       console.log("No daily questions found in Firestore, using local fallback data.");
       const today = new Date();
@@ -33,7 +27,6 @@ export async function getDailyQuiz(): Promise<Quiz> {
 
     const selectedQuestions: Question[] = [];
     querySnapshot.forEach((doc) => {
-      // Ensure the ID is attached, as it might not be in the document data itself
       selectedQuestions.push({ id: doc.id, ...doc.data() } as Question);
     });
 

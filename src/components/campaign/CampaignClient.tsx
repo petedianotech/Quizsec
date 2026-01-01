@@ -5,13 +5,15 @@ import { useMemoFirebase } from '@/firebase/provider';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { firestore } from '@/firebase/client-side-exports';
 import type { Season, Level, UserLevelProgress, UserProfile } from '@/types/quiz';
-import { Loader2, Lock, Star, Zap } from 'lucide-react';
+import { Loader2, Lock, Star, Zap, ChevronDown } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { Button } from '../ui/button';
+import Link from 'next/link';
 
 // Function to generate a color theme based on season number
 const getSeasonTheme = (seasonNumber: number) => {
@@ -21,12 +23,10 @@ const getSeasonTheme = (seasonNumber: number) => {
     const accentLightness = 60;
   
     return {
-      '--season-primary': `hsl(${hue}, ${saturation}%, ${lightness}%)`,
-      '--season-primary-foreground': `hsl(${hue}, ${saturation}%, 98%)`,
-      '--season-accent': `hsl(${hue}, ${saturation}%, ${accentLightness}%)`,
-      '--season-accent-foreground': `hsl(${hue}, ${saturation}%, 15%)`,
-      '--season-border': `hsl(${hue}, ${saturation}%, ${lightness - 10}%)`,
-      '--season-ring': `hsl(${hue}, ${saturation}%, ${accentLightness}%)`,
+      '--season-primary-hsl': `${hue}, ${saturation}%, ${lightness}%`,
+      '--season-accent-hsl': `${hue}, ${saturation}%, ${accentLightness}%`,
+      '--season-border-hsl': `${hue}, ${saturation}%, ${lightness - 10}%`,
+      '--season-ring-hsl': `${hue}, ${saturation}%, ${accentLightness}%`,
     } as React.CSSProperties;
 };
 
@@ -36,7 +36,7 @@ function LevelItem({ level, seasonNumber, userProgress, isUnlocked, onPlay }: { 
     const score = userProgress?.score ?? 0;
 
     const handleClick = () => {
-        if (isUnlocked && !isCompleted) {
+        if (isUnlocked) {
             onPlay(level.id, `season-${seasonNumber}`);
         }
     }
@@ -45,21 +45,21 @@ function LevelItem({ level, seasonNumber, userProgress, isUnlocked, onPlay }: { 
         <div
             onClick={handleClick}
             className={cn(
-                "flex items-center justify-between rounded-lg border p-4 transition-all",
-                !isUnlocked && "bg-muted/50 text-muted-foreground cursor-not-allowed",
-                isUnlocked && !isCompleted && "bg-accent/10 hover:bg-accent/20 cursor-pointer",
+                "group flex items-center justify-between rounded-lg border-2 p-4 transition-all",
+                !isUnlocked && "bg-muted/30 border-dashed border-muted-foreground/30 text-muted-foreground cursor-not-allowed",
+                isUnlocked && !isCompleted && "bg-background border-primary/20 hover:bg-primary/5 hover:border-primary/50 cursor-pointer",
                 isCompleted && "bg-green-600/10 border-green-600/30 text-primary cursor-default"
             )}
-            style={isUnlocked ? getSeasonTheme(seasonNumber) : {}}
         >
             <div className="flex items-center gap-4">
-                <div className={cn("flex h-10 w-10 items-center justify-center rounded-full border-2",
-                    isCompleted ? 'border-green-500 bg-green-500/20' : 'border-current'
+                <div className={cn("flex h-12 w-12 items-center justify-center rounded-full border-2 transition-colors",
+                    isCompleted ? 'border-green-500 bg-green-500/20' : 'border-primary/30',
+                    isUnlocked && !isCompleted && 'group-hover:border-primary/50 group-hover:bg-primary/10'
                 )}>
-                    {isCompleted ? <Star className="h-5 w-5 text-yellow-400" /> : isUnlocked ? <Zap className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
+                    {isCompleted ? <Star className="h-6 w-6 text-yellow-400" /> : isUnlocked ? <Zap className="h-6 w-6 text-primary/70 group-hover:text-primary" /> : <Lock className="h-6 w-6" />}
                 </div>
                 <div>
-                    <h4 className="font-semibold">{level.title}</h4>
+                    <h4 className="font-semibold text-lg">{`Level ${level.levelNumber}: ${level.title}`}</h4>
                     <p className="text-sm text-muted-foreground">{level.description}</p>
                 </div>
             </div>
@@ -68,6 +68,9 @@ function LevelItem({ level, seasonNumber, userProgress, isUnlocked, onPlay }: { 
                     <p className="font-bold text-lg">{score}/10</p>
                     <p className="text-xs text-muted-foreground">SCORE</p>
                 </div>
+            )}
+             {isUnlocked && !isCompleted && (
+                <Zap className="h-6 w-6 text-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
             )}
         </div>
     );
@@ -92,8 +95,8 @@ function SeasonAccordionItem({ season }: { season: Season }) {
 
     if (levelsLoading || userLoading) {
         return (
-            <div className="flex items-center justify-center p-4">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <div className="flex items-center justify-center p-8 rounded-lg border-2 border-dashed">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         )
     }
@@ -110,24 +113,23 @@ function SeasonAccordionItem({ season }: { season: Season }) {
 
 
     return (
-        <AccordionItem value={season.id} className="border-b-0">
+        <AccordionItem value={season.id} className="border-b-0" style={getSeasonTheme(season.seasonNumber)}>
             <AccordionTrigger 
-                className="rounded-lg border-2 p-4 text-left data-[state=open]:rounded-b-none data-[state=open]:border-b-0"
-                style={getSeasonTheme(season.seasonNumber)}
+                className="rounded-lg border-2 border-[hsl(var(--season-primary-hsl))] bg-[hsl(var(--season-primary-hsl)/0.1)] p-4 text-left hover:no-underline hover:bg-[hsl(var(--season-primary-hsl)/0.2)] data-[state=open]:rounded-b-none data-[state=open]:border-b-0"
             >
                 <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background/20 font-bold text-xl">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background/20 font-bold text-xl border-2 border-[hsl(var(--season-primary-hsl))]">
                         {season.seasonNumber}
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold">{season.title}</h3>
-                        <p className="text-sm opacity-80">{season.description}</p>
+                        <h3 className="text-xl font-bold font-headline">{season.title}</h3>
+                        <p className="text-sm text-muted-foreground">{season.description}</p>
                     </div>
                 </div>
+                 <ChevronDown className="h-5 w-5 shrink-0 transition-transform duration-200 text-[hsl(var(--season-primary-hsl))]" />
             </AccordionTrigger>
             <AccordionContent 
-                className="border-2 border-t-0 rounded-b-lg p-4"
-                style={getSeasonTheme(season.seasonNumber)}
+                className="border-2 border-[hsl(var(--season-primary-hsl))] border-t-0 rounded-b-lg p-4 bg-card"
             >
                 <div className="space-y-3">
                     {levels?.map(level => {
@@ -167,14 +169,23 @@ export function CampaignClient() {
   }
 
   return (
-    <div className="w-full max-w-4xl">
-      <h1 className="text-4xl font-bold text-center mb-2 font-headline">Campaign Mode</h1>
-      <p className="text-center text-muted-foreground mb-8">Test your knowledge across themed seasons and levels.</p>
+    <div className="w-full max-w-4xl px-4">
+      <div className="text-center mb-8">
+        <h1 className="text-5xl font-bold font-headline">Campaign Mode</h1>
+        <p className="text-lg text-muted-foreground mt-2">Test your knowledge across themed seasons and levels.</p>
+      </div>
       <Accordion type="single" collapsible className="w-full space-y-4">
         {seasons?.map((season) => (
           <SeasonAccordionItem key={season.id} season={season} />
         ))}
       </Accordion>
+      <div className="text-center mt-8">
+          <Button variant="ghost" asChild>
+            <Link href="/">
+                &larr; Back to Home
+            </Link>
+          </Button>
+      </div>
     </div>
   );
 }

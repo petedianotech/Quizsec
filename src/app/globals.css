@@ -82,3 +82,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .button-success {
+    @apply bg-green-600 text-white hover:bg-green-700;
+  }
+}

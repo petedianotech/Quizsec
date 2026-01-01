@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Loader2, BrainCircuit, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Loader2, BrainCircuit, ArrowRight, ShieldCheck, LogOut } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -11,27 +11,37 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { doc } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useEffect } from 'react';
+import { getAuth } from 'firebase/auth';
 
 function WelcomeCard() {
+  const { user } = useUser();
+  const auth = useAuth();
+  
+  const handleLogout = () => {
+    auth.signOut();
+  }
+
   return (
-    <Card className="w-full max-w-md text-center shadow-lg animate-in fade-in zoom-in-95">
+    <Card className="w-full max-w-md text-center shadow-lg animate-in fade-in zoom-in-95 border-primary/20">
       <CardHeader>
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
-            <BrainCircuit className="h-8 w-8 text-primary" />
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4 border-2 border-primary/20">
+            <BrainCircuit className="h-10 w-10 text-primary" />
         </div>
-        <CardTitle className="text-3xl font-bold font-headline">MindSprint</CardTitle>
-        <CardDescription className="text-lg">Daily Quiz & Campaign</CardDescription>
+        <CardTitle className="text-4xl font-bold font-headline">MindSprint</CardTitle>
+        <CardDescription className="text-lg">
+            Welcome, <span className="font-semibold text-primary">{user?.displayName || user?.email}</span>!
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Choose your challenge: the quick daily quiz or the epic campaign mode.</p>
+        <p className="text-muted-foreground">Choose your challenge: a quick daily quiz or the epic campaign mode.</p>
       </CardContent>
-      <CardFooter className="flex-col gap-2">
+      <CardFooter className="flex-col gap-3">
         <Button asChild className="w-full" size="lg">
           <Link href="/quiz">
             Start Today's Quiz <ArrowRight className="ml-2 h-5 w-5" />
@@ -41,6 +51,10 @@ function WelcomeCard() {
           <Link href="/campaign">
             Play Campaign <ShieldCheck className="ml-2 h-5 w-5" />
           </Link>
+        </Button>
+        <Button variant="link" size="sm" className="text-muted-foreground mt-4" onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
         </Button>
       </CardFooter>
     </Card>

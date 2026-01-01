@@ -30,12 +30,14 @@ export function QuestionCard({
   selectedAnswerIndex,
   isCampaignMode = false
 }: QuestionCardProps) {
-  const getButtonVariant = (index: number) => {
-    if (!isAnswered) return 'outline';
-    if (index === question.correctIndex) return 'success';
-    if (index === selectedAnswerIndex) return 'destructive';
-    return 'outline';
+  
+  const getButtonClass = (index: number) => {
+    if (!isAnswered) return 'border-primary/20 bg-background hover:bg-primary/5 hover:border-primary/50';
+    if (index === question.correctIndex) return 'button-success border-green-500';
+    if (index === selectedAnswerIndex) return 'bg-destructive border-destructive text-destructive-foreground hover:bg-destructive/90';
+    return 'border-primary/20 bg-background opacity-50';
   };
+
   const [key, setKey] = useState(0);
 
   useEffect(() => {
@@ -43,17 +45,17 @@ export function QuestionCard({
   }, [question]);
 
   return (
-    <Card className="w-full max-w-2xl animate-in fade-in zoom-in-95">
+    <Card className="w-full max-w-2xl animate-in fade-in zoom-in-95 shadow-lg border-primary/10">
       <CardHeader>
         <div className="flex justify-between items-center mb-4">
-          <p className="text-sm font-medium text-muted-foreground">
-            Question {questionNumber} / {totalQuestions}
+          <p className="text-sm font-semibold text-muted-foreground tracking-wider">
+            QUESTION {questionNumber} / {totalQuestions}
           </p>
           <div className="w-1/3">
              <TimerBar key={key} duration={15} onTimeUp={onTimeUp} isPaused={isAnswered} />
           </div>
         </div>
-        <CardTitle className="text-xl md:text-2xl text-center leading-relaxed">
+        <CardTitle className="text-2xl md:text-3xl text-center leading-relaxed font-headline">
           {question.questionText}
         </CardTitle>
       </CardHeader>
@@ -65,17 +67,15 @@ export function QuestionCard({
               onClick={() => onAnswer(index)}
               disabled={isAnswered}
               className={cn(
-                "h-auto min-h-[4rem] whitespace-normal justify-start p-4 text-left text-base leading-snug",
-                isAnswered && "text-white",
-                getButtonVariant(index) === 'success' && 'bg-green-600 hover:bg-green-700 border-green-600',
-                getButtonVariant(index) === 'destructive' && 'bg-red-600 hover:bg-red-700 border-red-600',
+                "h-auto min-h-[4rem] whitespace-normal justify-start p-4 text-left text-base leading-snug transition-all duration-300 border-2",
+                getButtonClass(index)
               )}
-              variant={isAnswered ? 'default' : 'outline'}
+              variant="outline"
             >
               <div className="flex items-center w-full">
                 <span className="flex-grow">{option}</span>
-                {isAnswered && index === question.correctIndex && <Check className="h-5 w-5 ml-2 shrink-0"/>}
-                {isAnswered && index !== question.correctIndex && index === selectedAnswerIndex && <X className="h-5 w-5 ml-2 shrink-0"/>}
+                {isAnswered && index === question.correctIndex && <Check className="h-6 w-6 ml-2 shrink-0"/>}
+                {isAnswered && index !== question.correctIndex && index === selectedAnswerIndex && <X className="h-6 w-6 ml-2 shrink-0"/>}
               </div>
             </Button>
           ))}
