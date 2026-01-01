@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -126,65 +127,53 @@ export function QuizClient() {
       }
     }
   }, [currentQuestionIndex, quiz, router, score, user, firestore, isCampaignMode, seasonId, levelId, userProfile]);
+  
+  const confirmAnswer = useCallback((answerIndex: number | null) => {
+    if (!currentQuestion) return;
+
+    setIsAnswered(true);
+
+    const isCorrect = answerIndex === currentQuestion.correctIndex;
+    if (isCorrect) {
+      setScore(prev => prev + 1);
+    }
+
+    if (user) {
+      logQuestionAnswer(currentQuestionIndex, isCorrect);
+    }
+
+    // Wait for 1.5 seconds to show the result, then move to the next question.
+    setTimeout(() => {
+      handleNextQuestion();
+    }, 1500);
+
+  }, [currentQuestion, currentQuestionIndex, user, handleNextQuestion]);
 
   const handleAnswer = useCallback((answerIndex: number) => {
-    if (isAnswered || !currentQuestion) return;
+    if (isAnswered) return;
 
     setSelectedAnswerIndex(answerIndex);
 
-    // If timer is off, wait for a short moment to show selection, then confirm
+    // If timer is off, show selection for a moment, then confirm.
     if (!timerEnabled) {
-        setTimeout(() => {
-            setIsAnswered(true);
-
-            const isCorrect = answerIndex === currentQuestion.correctIndex;
-            let newScore = score;
-            if (isCorrect) {
-                newScore = score + 1;
-                setScore(newScore);
-            }
-
-            if (user) {
-                logQuestionAnswer(currentQuestionIndex, isCorrect);
-            }
-
-            setTimeout(() => {
-                handleNextQuestion();
-            }, 1500);
-        }, 300); // 300ms to show selection
-        return;
+      setTimeout(() => {
+        confirmAnswer(answerIndex);
+      }, 300);
+    } else {
+      // If timer is on, confirm immediately as the timer will be paused.
+      confirmAnswer(answerIndex);
     }
-
-    // Default timer behavior
-    setIsAnswered(true);
-    const isCorrect = answerIndex === currentQuestion.correctIndex;
-    if (isCorrect) {
-        setScore(prev => prev + 1);
-    }
-    if (user) {
-        logQuestionAnswer(currentQuestionIndex, isCorrect);
-    }
-    setTimeout(() => {
-        handleNextQuestion();
-    }, 1500);
-  }, [isAnswered, currentQuestion, currentQuestionIndex, handleNextQuestion, user, score, timerEnabled]);
+  }, [isAnswered, confirmAnswer, timerEnabled]);
 
   const handleTimeUp = useCallback(() => {
     if (isAnswered) return;
     
-    setIsAnswered(true);
     // When time is up, we don't have a selected answer, so we pass null.
-    // The QuestionCard will know to only highlight the correct answer.
     setSelectedAnswerIndex(null); 
+    confirmAnswer(null);
 
-    if (user) {
-        logQuestionAnswer(currentQuestionIndex, false);
-    }
+  }, [isAnswered, confirmAnswer]);
 
-    setTimeout(() => {
-        handleNextQuestion();
-    }, 1500);
-  }, [isAnswered, currentQuestionIndex, handleNextQuestion, user]);
 
   if (isLoading || !quiz || !currentQuestion) {
     return (

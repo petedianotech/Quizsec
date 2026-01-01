@@ -1,7 +1,8 @@
+
 "use client";
 
 import type { Question } from '@/types/quiz';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TimerBar } from './TimerBar';
@@ -35,47 +36,36 @@ export function QuestionCard({
   const { timerEnabled, timerDuration } = useSettingsStore();
 
   const getButtonVariant = (index: number): 'outline' | 'success' | 'destructive' | 'default' | 'secondary' | 'ghost' | 'link' | null | undefined => {
-    const isSelected = index === selectedAnswerIndex;
-
     if (!isAnswered) {
-        return 'outline';
+      return index === selectedAnswerIndex ? 'secondary' : 'outline';
     }
 
     const isCorrect = index === question.correctIndex;
-    
-    if (selectedAnswerIndex === null) {
-        if (isCorrect) return 'success';
-        return 'outline';
-    }
+    const isSelected = index === selectedAnswerIndex;
 
-    if (isCorrect) {
-      return 'success';
-    }
-
-    if (isSelected && !isCorrect) {
-      return 'destructive';
-    }
+    if (isCorrect) return 'success';
+    if (isSelected && !isCorrect) return 'destructive';
     
     return 'outline';
   };
 
   const getButtonClass = (index: number) => {
-    const isSelected = index === selectedAnswerIndex;
-
-    if (!isAnswered) {
-        return isSelected ? '!bg-accent/20 !border-accent' : '';
-    }
+    if (!isAnswered) return '';
 
     const isCorrect = index === question.correctIndex;
+    const isSelected = index === selectedAnswerIndex;
     
-    if (selectedAnswerIndex === null) {
-        if (!isCorrect) return 'opacity-50';
+    // If an answer was selected (incorrectly)
+    if(selectedAnswerIndex !== null) {
+      if(!isCorrect && !isSelected) {
+        return 'opacity-50';
+      }
+    } else { // if time ran out (no selection)
+      if(!isCorrect) {
+         return 'opacity-50';
+      }
     }
-
-    if (!isCorrect && !isSelected) {
-      return 'opacity-50';
-    }
-
+    
     return '';
   };
 
