@@ -4,13 +4,14 @@
  * Core Philosophy:
  * The security model is user-centric. All user-generated data, such as quiz
  * sessions and user profiles, is strictly owned by the user who created it.
- * Public game content, like quiz questions, is readable by any signed-in user but is not
+ * Public game content, like quiz questions, seasons, and levels, is readable by any signed-in user but is not
  * client-writable, ensuring its integrity.
  *
  * Data Structure:
- * The data is organized into three main top-level collections:
+ * The data is organized into several main top-level collections:
  * 1. /questions/{questionId}: A public, read-only collection containing the game's questions.
- * 2. /users/{userId}: A collection where each document represents a user's profile.
+ * 2. /seasons/{seasonId}: A public, read-only collection for campaign seasons, containing a subcollection of levels.
+ * 3. /users/{userId}: A collection where each document represents a user's profile.
  *
  * All private, user-specific data is nested within a user's document. For example,
  * a user's game history is stored at /users/{userId}/userQuizSessions/{sessionId}. This
@@ -22,8 +23,8 @@
  * - Path-Based Ownership: User-specific data is stored in subcollections under
  *   /users/{userId}, allowing authorization to be determined directly from the document
  *   path. This avoids costly lookups and simplifies rules.
- * - Content Integrity: The /questions collection is read-only for all clients. Questions
- *   must be managed by a trusted server environment using the Admin SDK (or a Genkit flow).
+ * - Content Integrity: Public collections like /questions and /seasons are read-only for all clients.
+ *   This data must be managed by a trusted server environment using the Admin SDK (or a Genkit flow).
  * - Self-Service Profile: A user can create their own user profile document upon
  *   signing up, but cannot create profiles for others.
  */
@@ -103,6 +104,29 @@ service cloud.firestore {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
     }
+    
+    // --------------------------------------------------------------------
+    // Collection: seasons
+    // --------------------------------------------------------------------
+
+    /**
+     * @description Public, read-only collections for campaign structure.
+     * @path /seasons/{seasonId}
+     * @path /seasons/{seasonId}/levels/{levelId}
+     * @allow (get, list) Any signed-in user can read seasons and levels.
+     * @deny (create, update, delete) Clients cannot modify the campaign structure.
+     * @principle Secures game content by making it read-only for clients.
+     */
+    match /seasons/{seasonId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+      
+      match /levels/{levelId} {
+        allow get, list: if isSignedIn();
+        allow create, update, delete: if false;
+      }
+    }
+
 
     // --------------------------------------------------------------------
     // Collection: users
