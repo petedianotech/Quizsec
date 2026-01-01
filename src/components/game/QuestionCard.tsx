@@ -37,16 +37,28 @@ export function QuestionCard({
     const isCorrect = index === question.correctIndex;
     const isSelected = index === selectedAnswerIndex;
 
-    // Time's up: only show correct answer
+    // Time's up (no answer selected)
     if (selectedAnswerIndex === null) {
-        if (isCorrect) return 'button-success border-green-500';
-        return 'border-primary/20 bg-background opacity-50';
+        if (isCorrect) return 'button-success border-green-500'; // Show correct answer
+        return 'border-primary/20 bg-background opacity-50'; // Fade out others
     }
 
-    // User answered: show correct and incorrect selections
-    if (isCorrect) return 'button-success border-green-500';
-    if (isSelected) return 'bg-destructive border-destructive text-destructive-foreground hover:bg-destructive/90';
+    // User selected the correct answer
+    if (isCorrect && isSelected) {
+      return 'button-success border-green-500';
+    }
+
+    // User selected the wrong answer
+    if (!isCorrect && isSelected) {
+      return 'bg-destructive border-destructive text-destructive-foreground hover:bg-destructive/90';
+    }
+
+    // This is the correct answer, but was not selected
+    if (isCorrect) {
+      return 'button-success border-green-500 opacity-80';
+    }
     
+    // An unselected, incorrect option
     return 'border-primary/20 bg-background opacity-50';
   };
 
