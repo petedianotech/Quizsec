@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'MindSprint Daily',
@@ -22,7 +23,12 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased h-full">{children}<Toaster /></body>
+      <body className="font-body antialiased h-full">
+        <FirebaseClientProvider>
+          {children}
+          <Toaster />
+        </FirebaseClientProvider>
+      </body>
     </html>
   );
 }

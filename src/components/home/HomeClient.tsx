@@ -12,18 +12,15 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
+import { useUser } from '@/firebase';
+import { AuthForm } from '@/components/auth/AuthForm';
+import { doc } from 'firebase/firestore';
+import { useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useEffect } from 'react';
 
-export function HomeClient() {
+function WelcomeCard() {
   const { isCompletedToday, score } = useDailyLock();
-
-  if (isCompletedToday === null) {
-    return (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-muted-foreground">Checking your daily status...</p>
-      </div>
-    );
-  }
 
   if (isCompletedToday) {
     return (
@@ -65,4 +62,46 @@ export function HomeClient() {
       </CardFooter>
     </Card>
   );
+}
+
+
+export function HomeClient() {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  
+  useEffect(() => {
+    if (user && userDocRef) {
+      // When a user is authenticated, we create their user profile document
+      // in Firestore. We use `set` with `merge: true` to avoid overwriting
+      // the document if it already exists.
+      const userData = {
+        id: user.uid,
+        email: user.email,
+        username: user.displayName || user.email?.split('@')[0] || 'Anonymous',
+        createdAt: new Date().toISOString(),
+      };
+      setDocumentNonBlocking(userDocRef, userData, { merge: true });
+    }
+  }, [user, userDocRef]);
+
+
+  if (isUserLoading) {
+    return (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="text-muted-foreground">Checking authentication...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthForm />;
+  }
+
+  return <WelcomeCard />;
 }
