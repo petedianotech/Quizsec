@@ -11,34 +11,25 @@ interface TimerBarProps {
 
 export function TimerBar({ duration, onTimeUp, isPaused }: TimerBarProps) {
   const [progress, setProgress] = useState(100);
-  const timeUpReported = useRef(false);
+  const timeIsUp = progress <= 0;
 
   useEffect(() => {
     if (isPaused) {
       return;
     }
-
-    // Reset timer state when a new question comes in (via key change)
-    setProgress(100);
-    timeUpReported.current = false;
-
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        const newProgress = prev - (100 / (duration * 10)); // update every 100ms
-        if (newProgress <= 0) {
-          clearInterval(interval);
-          if (!timeUpReported.current) {
-            onTimeUp();
-            timeUpReported.current = true;
-          }
-          return 0;
-        }
-        return newProgress;
-      });
+      setProgress((prev) => (prev > 0 ? prev - (100 / (duration * 10)) : 0));
     }, 100);
 
     return () => clearInterval(interval);
-  }, [duration, isPaused, onTimeUp]);
+  }, [duration, isPaused]);
+  
+  useEffect(() => {
+    if(timeIsUp) {
+        onTimeUp();
+    }
+  }, [timeIsUp, onTimeUp]);
+
 
   return <Progress value={progress} className="h-2 w-full" />;
 }
