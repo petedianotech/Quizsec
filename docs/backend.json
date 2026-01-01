@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -23,6 +24,13 @@
           "type": "string",
           "description": "Timestamp indicating when the user account was created.",
           "format": "date-time"
+        },
+        "campaignProgress": {
+          "type": "object",
+          "description": "Tracks the user's progress through the campaign seasons and levels.",
+          "additionalProperties": {
+            "$ref": "#/backend/entities/UserLevelProgress"
+          }
         }
       },
       "required": [
@@ -83,6 +91,14 @@
         "difficultyLevel": {
           "type": "number",
           "description": "The difficulty level of the question (1-10)."
+        },
+        "levelId": {
+            "type": "string",
+            "description": "The ID of the level this question belongs to."
+        },
+        "seasonId": {
+            "type": "string",
+            "description": "The ID of the season this question belongs to."
         }
       },
       "required": [
@@ -111,6 +127,14 @@
           "type": "string",
           "description": "Reference to Quiz. (Relationship: Quiz 1:N UserQuizSession)"
         },
+        "levelId": {
+            "type": "string",
+            "description": "The ID of the level played in this session."
+        },
+        "seasonId": {
+            "type": "string",
+            "description": "The ID of the season played in this session."
+        },
         "startTime": {
           "type": "string",
           "description": "Timestamp indicating when the user started the quiz session.",
@@ -124,13 +148,6 @@
         "score": {
           "type": "number",
           "description": "The user's score for the quiz session."
-        },
-        "questionResponses": {
-          "type": "array",
-          "description": "An array of user responses to each question in the quiz.",
-          "items": {
-            "type": "string"
-          }
         }
       },
       "required": [
@@ -141,6 +158,72 @@
         "endTime",
         "score"
       ]
+    },
+    "Season": {
+      "title": "Season",
+      "type": "object",
+      "description": "Represents a campaign season containing multiple levels.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "seasonNumber": {
+          "type": "number"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "seasonNumber", "title"]
+    },
+    "Level": {
+      "title": "Level",
+      "type": "object",
+      "description": "Represents a level within a season.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "levelNumber": {
+          "type": "number"
+        },
+        "seasonId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "levelNumber", "seasonId", "title"]
+    },
+    "UserLevelProgress": {
+      "title": "UserLevelProgress",
+      "type": "object",
+      "description": "Represents a user's progress in a specific level.",
+      "properties": {
+        "levelId": {
+          "type": "string"
+        },
+        "seasonId": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "unlocked": {
+            "type": "boolean"
+        }
+      },
+      "required": ["levelId", "seasonId", "score", "completed", "unlocked"]
     }
   },
   "auth": {
@@ -152,29 +235,13 @@
   "firestore": {
     "structure": [
       {
-        "path": "/questions/{questionId}",
-        "definition": {
-          "entityName": "Question",
-          "schema": {
-            "$ref": "#/backend/entities/Question"
-          },
-          "description": "Stores individual quiz questions.",
-          "params": [
-            {
-              "name": "questionId",
-              "description": "Unique identifier for the question."
-            }
-          ]
-        }
-      },
-      {
         "path": "/users/{userId}",
         "definition": {
           "entityName": "User",
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles.",
+          "description": "Stores user profiles and their campaign progress.",
           "params": [
             {
               "name": "userId",
@@ -190,7 +257,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserQuizSession"
           },
-          "description": "Stores user's quiz sessions. Path-based ownership ensures only the user can access their quiz sessions.",
+          "description": "Stores user's quiz sessions for both daily and campaign modes.",
           "params": [
             {
               "name": "userId",
@@ -202,8 +269,40 @@
             }
           ]
         }
+      },
+      {
+        "path": "/seasons/{seasonId}",
+        "definition": {
+          "entityName": "Season",
+          "schema": { "$ref": "#/backend/entities/Season" },
+          "description": "Stores the campaign seasons."
+        }
+      },
+      {
+        "path": "/seasons/{seasonId}/levels/{levelId}",
+        "definition": {
+          "entityName": "Level",
+          "schema": { "$ref": "#/backend/entities/Level" },
+          "description": "Stores the levels for each season."
+        }
+      },
+      {
+        "path": "/questions/{questionId}",
+        "definition": {
+          "entityName": "Question",
+          "schema": {
+            "$ref": "#/backend/entities/Question"
+          },
+          "description": "Stores all quiz questions. Questions can be associated with a season and level.",
+          "params": [
+            {
+              "name": "questionId",
+              "description": "Unique identifier for the question."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the MindSprint Daily game, emphasizing security, scalability, and ease of debugging. The structure prioritizes authorization independence using denormalization, simplifies security rules via structural segregation, and ensures data clarity through explicit state modeling and predictable schemas. Path-based ownership is used where applicable to enhance security.\n\n*   `/questions/{questionId}`: This collection stores the bank of all quiz questions. This allows for efficient querying and management of the question pool.\n*   `/users/{userId}`: This collection stores user profiles.\n*   `/users/{userId}/userQuizSessions/{sessionId}`: This subcollection stores the user's quiz sessions. This path-based ownership ensures that only the user can access their quiz sessions. The structure includes the `userId` in the path, making it easy to enforce security rules based on user identity.\n\n**Authorization Independence (CRITICAL):**\n\n*   The design leverages path-based ownership (`/users/{userId}/userQuizSessions/{sessionId}`) to ensure that authorization can be determined directly from the document path without needing to `get()` parent documents. This supports atomic operations and simplifies security rules.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations. Since the `userQuizSessions` are stored in a subcollection of `users`, listing quiz sessions is inherently limited to a specific user. The rule `allow list: if request.auth.uid == userId;` will ensure that a user can only list their own quiz sessions."
+    "reasoning": "The Firestore structure is updated to support a campaign mode with seasons and levels. User progress is tracked within the user's document. This keeps user-specific data isolated and secure. The seasons and levels collections are public content. Questions are now linked to seasons and levels."
   }
 }
