@@ -1,4 +1,5 @@
 import { HomeClient } from '@/components/home/HomeClient';
+import { SidebarProvider, Sidebar, SidebarInset, SidebarContent, SidebarHeader, SidebarTrigger } from '@/components/ui/sidebar';
 
 export default function Home() {
   return (

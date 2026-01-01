@@ -3,7 +3,7 @@
 import { useDailyLock } from '@/hooks/use-daily-lock';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Loader2, CheckCircle, BrainCircuit, ArrowRight } from 'lucide-react';
+import { Loader2, CheckCircle, BrainCircuit, ArrowRight, ShieldCheck } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -35,8 +35,15 @@ function WelcomeCard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-lg">Come back tomorrow for a new set of challenges.</p>
+          <p className="text-lg">Come back tomorrow for a new set of challenges or try our new campaign mode!</p>
         </CardContent>
+        <CardFooter className="flex-col gap-2">
+            <Button asChild className="w-full" size="lg">
+              <Link href="/campaign">
+                Play Campaign <ShieldCheck className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+        </CardFooter>
       </Card>
     );
   }
@@ -47,16 +54,21 @@ function WelcomeCard() {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
             <BrainCircuit className="h-8 w-8 text-primary" />
         </div>
-        <CardTitle className="text-3xl font-bold font-headline">MindSprint Daily</CardTitle>
-        <CardDescription className="text-lg">How sharp is your mind today?</CardDescription>
+        <CardTitle className="text-3xl font-bold font-headline">MindSprint</CardTitle>
+        <CardDescription className="text-lg">Daily Quiz & Campaign</CardDescription>
       </CardHeader>
       <CardContent>
-        <p>You have 10 questions to solve. Each has a 15-second time limit. Good luck!</p>
+        <p>Choose your challenge: the quick daily quiz or the epic campaign mode.</p>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-col gap-2">
         <Button asChild className="w-full" size="lg">
           <Link href="/quiz">
             Start Today's Quiz <ArrowRight className="ml-2 h-5 w-5" />
+          </Link>
+        </Button>
+        <Button asChild className="w-full" size="lg" variant="secondary">
+          <Link href="/campaign">
+            Play Campaign <ShieldCheck className="ml-2 h-5 w-5" />
           </Link>
         </Button>
       </CardFooter>
