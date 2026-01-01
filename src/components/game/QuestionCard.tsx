@@ -8,6 +8,7 @@ import { TimerBar } from './TimerBar';
 import { Check, X, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSettingsStore } from '@/store/settings-store';
 
 interface QuestionCardProps {
   question: Question;
@@ -31,12 +32,18 @@ export function QuestionCard({
   isCampaignMode = false
 }: QuestionCardProps) {
   
+  const { timerEnabled, timerDuration } = useSettingsStore();
+
   const getButtonClass = (index: number) => {
-    if (!isAnswered) return 'border-primary/20 bg-background hover:bg-primary/5 hover:border-primary/50';
-    
-    const isCorrect = index === question.correctIndex;
     const isSelected = index === selectedAnswerIndex;
 
+    // Not answered yet
+    if (!isAnswered) {
+        return `border-primary/20 bg-background hover:bg-primary/5 hover:border-primary/50 ${isSelected ? '!bg-accent/20 !border-accent' : ''}`;
+    }
+
+    const isCorrect = index === question.correctIndex;
+    
     // Time's up (no answer selected)
     if (selectedAnswerIndex === null) {
         if (isCorrect) return 'button-success border-green-500'; // Show correct answer
@@ -75,9 +82,11 @@ export function QuestionCard({
           <p className="text-sm font-semibold text-muted-foreground tracking-wider">
             QUESTION {questionNumber} / {totalQuestions}
           </p>
-          <div className="w-1/3">
-             <TimerBar key={key} duration={15} onTimeUp={onTimeUp} isPaused={isAnswered} />
-          </div>
+          {timerEnabled && (
+            <div className="w-1/3">
+                <TimerBar key={key} duration={timerDuration} onTimeUp={onTimeUp} isPaused={isAnswered} />
+            </div>
+          )}
         </div>
         <CardTitle className="text-2xl md:text-3xl text-center leading-relaxed font-headline">
           {question.questionText}

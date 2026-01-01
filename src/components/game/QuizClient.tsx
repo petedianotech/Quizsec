@@ -11,6 +11,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useDoc } from '@/firebase/firestore/use-doc';
+import { useSettingsStore } from '@/store/settings-store';
 
 export function QuizClient() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -23,6 +24,8 @@ export function QuizClient() {
   const firestore = useFirestore();
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  const { timerEnabled } = useSettingsStore();
 
   const levelId = searchParams.get('levelId');
   const seasonId = searchParams.get('seasonId');
@@ -127,24 +130,44 @@ export function QuizClient() {
   const handleAnswer = useCallback((answerIndex: number) => {
     if (isAnswered || !currentQuestion) return;
 
-    setIsAnswered(true);
     setSelectedAnswerIndex(answerIndex);
 
-    const isCorrect = answerIndex === currentQuestion.correctIndex;
-    let newScore = score;
-    if (isCorrect) {
-      newScore = score + 1;
-      setScore(newScore);
+    // If timer is off, wait for a short moment to show selection, then confirm
+    if (!timerEnabled) {
+        setTimeout(() => {
+            setIsAnswered(true);
+
+            const isCorrect = answerIndex === currentQuestion.correctIndex;
+            let newScore = score;
+            if (isCorrect) {
+                newScore = score + 1;
+                setScore(newScore);
+            }
+
+            if (user) {
+                logQuestionAnswer(currentQuestionIndex, isCorrect);
+            }
+
+            setTimeout(() => {
+                handleNextQuestion();
+            }, 1500);
+        }, 300); // 300ms to show selection
+        return;
     }
 
+    // Default timer behavior
+    setIsAnswered(true);
+    const isCorrect = answerIndex === currentQuestion.correctIndex;
+    if (isCorrect) {
+        setScore(prev => prev + 1);
+    }
     if (user) {
         logQuestionAnswer(currentQuestionIndex, isCorrect);
     }
-    
     setTimeout(() => {
         handleNextQuestion();
-    }, 1500); 
-  }, [isAnswered, currentQuestion, currentQuestionIndex, handleNextQuestion, user, score]);
+    }, 1500);
+  }, [isAnswered, currentQuestion, currentQuestionIndex, handleNextQuestion, user, score, timerEnabled]);
 
   const handleTimeUp = useCallback(() => {
     if (isAnswered) return;

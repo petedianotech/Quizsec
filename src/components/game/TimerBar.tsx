@@ -14,7 +14,7 @@ export function TimerBar({ duration, onTimeUp, isPaused }: TimerBarProps) {
   const timeIsUp = progress <= 0;
 
   useEffect(() => {
-    if (isPaused) {
+    if (isPaused || timeIsUp) {
       return;
     }
     const interval = setInterval(() => {
@@ -22,7 +22,7 @@ export function TimerBar({ duration, onTimeUp, isPaused }: TimerBarProps) {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [duration, isPaused]);
+  }, [duration, isPaused, timeIsUp]);
   
   useEffect(() => {
     if(timeIsUp) {

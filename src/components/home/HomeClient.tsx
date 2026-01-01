@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Loader2, BrainCircuit, ArrowRight, ShieldCheck, LogOut } from 'lucide-react';
+import { Loader2, BrainCircuit, ArrowRight, ShieldCheck, LogOut, Settings } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -17,7 +17,65 @@ import { doc } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useEffect } from 'react';
-import { getAuth } from 'firebase/auth';
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { useSettingsStore } from '@/store/settings-store';
+
+
+function SettingsSheet() {
+  const { timerEnabled, timerDuration, setTimerEnabled, setTimerDuration } = useSettingsStore();
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="sm" className="absolute top-4 right-4 text-muted-foreground">
+          <Settings className="mr-2 h-4 w-4" />
+          Settings
+        </Button>
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Game Settings</SheetTitle>
+          <SheetDescription>Customize your quiz experience.</SheetDescription>
+        </SheetHeader>
+        <div className="grid gap-6 py-6">
+            <div className="grid grid-cols-2 items-center gap-4">
+              <Label htmlFor="timer-switch" className='col-span-2 text-base'>
+                Enable Question Timer
+              </Label>
+              <Switch
+                id="timer-switch"
+                checked={timerEnabled}
+                onCheckedChange={setTimerEnabled}
+                className='col-start-1'
+              />
+            </div>
+            {timerEnabled && (
+                <div className="grid gap-2">
+                    <div className='flex justify-between items-baseline'>
+                        <Label htmlFor="timer-duration" className='text-base'>
+                            Timer Duration
+                        </Label>
+                         <span className='text-sm font-bold text-primary w-12 text-center'>{timerDuration}s</span>
+                    </div>
+                    <Slider
+                        id="timer-duration"
+                        min={5}
+                        max={15}
+                        step={1}
+                        value={[timerDuration]}
+                        onValueChange={(value) => setTimerDuration(value[0])}
+                    />
+                </div>
+            )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 
 function WelcomeCard() {
   const { user } = useUser();
@@ -28,8 +86,9 @@ function WelcomeCard() {
   }
 
   return (
-    <Card className="w-full max-w-md text-center shadow-lg animate-in fade-in zoom-in-95 border-primary/20">
-      <CardHeader>
+    <Card className="relative w-full max-w-md text-center shadow-lg animate-in fade-in zoom-in-95 border-primary/20">
+      <SettingsSheet />
+      <CardHeader className="pt-12">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4 border-2 border-primary/20">
             <BrainCircuit className="h-10 w-10 text-primary" />
         </div>
