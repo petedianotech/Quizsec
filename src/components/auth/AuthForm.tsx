@@ -26,6 +26,7 @@ import { BrainCircuit, LogIn } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { initiateAnonymousSignIn, initiateEmailSignIn, initiateEmailSignUp } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 
 const formSchema = z.object({
@@ -152,6 +153,17 @@ export function AuthForm() {
                     {isLogin ? 'Sign up' : 'Log in'}
                 </Button>
             </p>
+             <div className="mt-4 text-center text-xs text-muted-foreground">
+              By continuing, you agree to our{' '}
+              <Link href="/terms-of-service" className="underline hover:text-primary">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy-policy" className="underline hover:text-primary">
+                Privacy Policy
+              </Link>
+              .
+            </div>
           </CardFooter>
         </form>
       </Form>
