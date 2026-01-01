@@ -17,7 +17,7 @@ const fontHeadline = Space_Grotesk({
 
 
 export const metadata: Metadata = {
-  title: 'MindSprint Daily',
+  title: 'Quizsec',
   description: 'How sharp is your mind today?',
 };
 

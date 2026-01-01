@@ -79,7 +79,7 @@ export function AuthForm() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
                 <BrainCircuit className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-3xl font-bold font-headline">MindSprint Daily</CardTitle>
+            <CardTitle className="text-3xl font-bold font-headline">Quizsec</CardTitle>
             <CardDescription className="text-lg">
               {isLogin ? "Welcome back! Please sign in." : "Create an account to get started."}
             </CardDescription>

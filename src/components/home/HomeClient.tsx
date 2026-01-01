@@ -33,7 +33,7 @@ function WelcomeCard() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4 border-2 border-primary/20">
             <BrainCircuit className="h-10 w-10 text-primary" />
         </div>
-        <CardTitle className="text-4xl font-bold font-headline">MindSprint</CardTitle>
+        <CardTitle className="text-4xl font-bold font-headline">Quizsec</CardTitle>
         <CardDescription className="text-lg">
             Welcome, <span className="font-semibold text-primary">{user?.displayName || user?.email}</span>!
         </CardDescription>

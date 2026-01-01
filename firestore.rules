@@ -1,5 +1,5 @@
 /**
- * This ruleset enforces a security model for the MindSprint Daily game.
+ * This ruleset enforces a security model for the Quizsec game.
  *
  * Core Philosophy:
  * The security model is user-centric. All user-generated data, such as quiz
