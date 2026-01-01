@@ -9,6 +9,12 @@ export default {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        'grid-pattern': "radial-gradient(circle, hsl(var(--foreground) / 0.05) 1px, transparent 1px)",
+      },
+      backgroundSize: {
+        'grid-pattern': '20px 20px',
+      },
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],

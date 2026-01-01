@@ -13,7 +13,8 @@ function QuizLoading() {
 
 export default function QuizPage() {
   return (
-    <main className="flex h-full w-full flex-col items-center justify-center bg-background p-4">
+    <main className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-background p-4">
+        <div className="absolute top-0 left-0 h-full w-full bg-grid-pattern opacity-5" />
         <Suspense fallback={<QuizLoading />}>
             <QuizClient />
         </Suspense>
