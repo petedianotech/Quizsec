@@ -33,8 +33,20 @@ export function QuestionCard({
   
   const getButtonClass = (index: number) => {
     if (!isAnswered) return 'border-primary/20 bg-background hover:bg-primary/5 hover:border-primary/50';
-    if (index === question.correctIndex) return 'button-success border-green-500';
-    if (index === selectedAnswerIndex) return 'bg-destructive border-destructive text-destructive-foreground hover:bg-destructive/90';
+    
+    const isCorrect = index === question.correctIndex;
+    const isSelected = index === selectedAnswerIndex;
+
+    // Time's up: only show correct answer
+    if (selectedAnswerIndex === null) {
+        if (isCorrect) return 'button-success border-green-500';
+        return 'border-primary/20 bg-background opacity-50';
+    }
+
+    // User answered: show correct and incorrect selections
+    if (isCorrect) return 'button-success border-green-500';
+    if (isSelected) return 'bg-destructive border-destructive text-destructive-foreground hover:bg-destructive/90';
+    
     return 'border-primary/20 bg-background opacity-50';
   };
 

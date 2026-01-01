@@ -69,7 +69,7 @@ export function QuizClient() {
       setSelectedAnswerIndex(null);
     } else {
       // End of quiz
-      const finalScore = score + (isAnswered ? 0 : 0); // Ensure score is updated before this runs
+      const finalScore = score;
       logQuizComplete(finalScore, quiz.questions.length);
 
       if (user && firestore) {
@@ -102,15 +102,18 @@ export function QuizClient() {
               }
           }
 
-          await updateDoc(userRef, {
-            [progressKey]: {
-                levelId: levelId,
-                seasonId: seasonId,
-                score: finalScore,
-                completed: true,
-                unlocked: true, // The current level is always unlocked if played
-            }
-          });
+          const currentProgress = userProfile?.campaignProgress?.[progressKey.replace('campaignProgress.', '')] ?? { score: 0 };
+          if(finalScore > currentProgress.score) {
+            await updateDoc(userRef, {
+                [progressKey]: {
+                    levelId: levelId,
+                    seasonId: seasonId,
+                    score: finalScore,
+                    completed: true,
+                    unlocked: true, 
+                }
+            });
+          }
         }
       }
       if (isCampaignMode) {
@@ -119,7 +122,7 @@ export function QuizClient() {
         router.push(`/results?score=${finalScore}&total=${quiz.questions.length}`);
       }
     }
-  }, [currentQuestionIndex, quiz, router, score, user, firestore, isCampaignMode, seasonId, levelId, isAnswered]);
+  }, [currentQuestionIndex, quiz, router, score, user, firestore, isCampaignMode, seasonId, levelId, userProfile]);
 
   const handleAnswer = useCallback((answerIndex: number) => {
     if (isAnswered || !currentQuestion) return;
@@ -147,6 +150,8 @@ export function QuizClient() {
     if (isAnswered) return;
     
     setIsAnswered(true);
+    // When time is up, we don't have a selected answer, so we pass null.
+    // The QuestionCard will know to only highlight the correct answer.
     setSelectedAnswerIndex(null); 
 
     if (user) {
