@@ -1,7 +1,7 @@
 "use client";
 
 import type { Question } from '@/types/quiz';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TimerBar } from './TimerBar';
@@ -34,39 +34,49 @@ export function QuestionCard({
   
   const { timerEnabled, timerDuration } = useSettingsStore();
 
-  const getButtonClass = (index: number) => {
+  const getButtonVariant = (index: number): VariantProps<typeof buttonVariants>['variant'] => {
     const isSelected = index === selectedAnswerIndex;
 
-    // Not answered yet
     if (!isAnswered) {
-        return `border-primary/20 bg-background hover:bg-primary/5 hover:border-primary/50 ${isSelected ? '!bg-accent/20 !border-accent' : ''}`;
+        return 'outline';
     }
 
     const isCorrect = index === question.correctIndex;
     
-    // Time's up (no answer selected)
     if (selectedAnswerIndex === null) {
-        if (isCorrect) return 'button-success border-green-500'; // Show correct answer
-        return 'border-primary/20 bg-background opacity-50'; // Fade out others
+        if (isCorrect) return 'success';
+        return 'outline';
     }
 
-    // User selected the correct answer
-    if (isCorrect && isSelected) {
-      return 'button-success border-green-500';
-    }
-
-    // User selected the wrong answer
-    if (!isCorrect && isSelected) {
-      return 'bg-destructive border-destructive text-destructive-foreground hover:bg-destructive/90';
-    }
-
-    // This is the correct answer, but was not selected
     if (isCorrect) {
-      return 'button-success border-green-500 opacity-80';
+      return 'success';
+    }
+
+    if (isSelected && !isCorrect) {
+      return 'destructive';
     }
     
-    // An unselected, incorrect option
-    return 'border-primary/20 bg-background opacity-50';
+    return 'outline';
+  };
+
+  const getButtonClass = (index: number) => {
+    const isSelected = index === selectedAnswerIndex;
+
+    if (!isAnswered) {
+        return isSelected ? '!bg-accent/20 !border-accent' : '';
+    }
+
+    const isCorrect = index === question.correctIndex;
+    
+    if (selectedAnswerIndex === null) {
+        if (!isCorrect) return 'opacity-50';
+    }
+
+    if (!isCorrect && !isSelected) {
+      return 'opacity-50';
+    }
+
+    return '';
   };
 
   const [key, setKey] = useState(0);
@@ -103,7 +113,7 @@ export function QuestionCard({
                 "h-auto min-h-[4rem] whitespace-normal justify-start p-4 text-left text-base leading-snug transition-all duration-300 border-2",
                 getButtonClass(index)
               )}
-              variant="outline"
+              variant={getButtonVariant(index)}
             >
               <div className="flex items-center w-full">
                 <span className="flex-grow">{option}</span>
